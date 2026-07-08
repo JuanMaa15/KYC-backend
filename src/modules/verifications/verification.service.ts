@@ -1,5 +1,5 @@
 import { PrismaClient, $Enums } from '@/database/generated/prisma/client'
-import { NotFoundError } from '@/share/errors'
+import { NotFoundError, BadRequestError } from '@/share/errors'
 import { StorageProvider } from '@/providers/storage.provider'
 import { validateFile } from './verification.schema'
 import type { CreateVerificationDto } from './verification.schema'
@@ -55,6 +55,31 @@ export class VerificationService {
     }
 
     return verification
+  }
+
+  async updateStatus(id: string, newStatus: 'approved' | 'rejected') {
+    const allowedStatuses = Object.values($Enums.VerificationStatus).filter(
+      (s) => s !== $Enums.VerificationStatus.pending
+    )
+
+    if (!allowedStatuses.includes(newStatus)) {
+      throw new BadRequestError('El estado debe ser approved o rejected')
+    }
+
+    const verification = await this.prisma.verification.findUnique({ where: { id } })
+
+    if (!verification) {
+      throw new NotFoundError('Verificación no encontrada')
+    }
+
+    if (verification.status !== $Enums.VerificationStatus.pending) {
+      throw new BadRequestError('Solo se pueden cambiar verificaciones en estado pending')
+    }
+
+    return this.prisma.verification.update({
+      where: { id },
+      data: { status: newStatus },
+    })
   }
 
   private getExtension(file: File): string {

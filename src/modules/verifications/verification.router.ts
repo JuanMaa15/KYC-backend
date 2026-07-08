@@ -3,7 +3,7 @@ import { zValidator } from '@hono/zod-validator'
 import { createPrismaClient } from '@/database/prismaService'
 import { StorageProvider } from '@/providers/storage.provider'
 import { VerificationService } from './verification.service'
-import { createVerificationSchema, verificationParamsSchema } from './verification.schema'
+import { createVerificationSchema, verificationParamsSchema, updateStatusSchema } from './verification.schema'
 import { BadRequestError } from '@/share/errors'
 import type { Env } from '@/config/env'
 
@@ -46,5 +46,23 @@ app.get('/:id', zValidator('param', verificationParamsSchema), async (c) => {
     200
   )
 })
+
+app.patch(
+  '/:id/status',
+  zValidator('param', verificationParamsSchema),
+  zValidator('json', updateStatusSchema),
+  async (c) => {
+    const { id } = c.req.valid('param')
+    const { status } = c.req.valid('json')
+    const prisma = createPrismaClient(c.env.DB)
+    const storage = new StorageProvider(c.env.KYC_BUCKET)
+    const service = new VerificationService(prisma, storage)
+    const verification = await service.updateStatus(id, status)
+    return c.json(
+      { status: 'success', message: 'Estado actualizado', data: verification, code: 200 },
+      200
+    )
+  }
+)
 
 export default app
