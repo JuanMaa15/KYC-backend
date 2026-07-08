@@ -1,0 +1,36 @@
+{
+  "name": "kyc-backend",
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "deploy": "wrangler deploy --minify",
+    "cf-typegen": "wrangler types --env-interface CloudflareBindings",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
+    "db:generate": "prisma generate",
+    "db:migrate": "wrangler d1 migrations apply kyc-db",
+    "db:studio": "prisma studio",
+    "lint": "eslint src --ext .ts",
+    "lint:fix": "eslint src --ext .ts --fix",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@hono/zod-validator": "^0.4.3",
+    "@prisma/adapter-d1": "^7.6.0",
+    "@prisma/client": "^7.6.0",
+    "hono": "^4.12.27",
+    "zod": "^3.25.71"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "@types/node": "^26.1.0",
+    "@typescript-eslint/eslint-plugin": "^8.35.1",
+    "@typescript-eslint/parser": "^8.35.1",
+    "eslint": "^9.0.0",
+    "prisma": "^7.6.0",
+    "typescript-eslint": "^8.35.1",
+    "vitest": "^3.2.4",
+    "wrangler": "^4.4.0"
+  }
+}
