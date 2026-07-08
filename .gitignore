@@ -31,3 +31,7 @@ coverage/
 Thumbs.db
 
 /src/generated/prisma
+
+# Base de datos local
+dev.db
+dev.db-journal
