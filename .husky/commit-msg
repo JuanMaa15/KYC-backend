@@ -1,0 +1,23 @@
+#!/usr/bin/env sh
+. "$(dirname "$0")/_/h"
+
+commit_message=$(cat "$1")
+
+pattern="^(chore|feat|refactor|fix)\([a-zA-Z0-9_-]+\): .+"
+
+if ! echo "$commit_message" | grep -qE "$pattern"; then
+  echo ""
+  echo "  ❌ Formato de commit inválido."
+  echo ""
+  echo "  Debe ser: type(category): mensaje"
+  echo ""
+  echo "  Types permitidos: chore, feat, refactor, fix"
+  echo ""
+  echo "  Ejemplos:"
+  echo "    feat(core): agregar middleware de rate limiting"
+  echo "    fix(database): corregir migración de verifications"
+  echo "    chore(deps): actualizar dependencias"
+  echo "    refactor(api): simplificar ruta de verifications"
+  echo ""
+  exit 1
+fi

@@ -13,6 +13,10 @@ dist/
 
 # Prisma — código generado (se regenera con db:generate)
 src/generated/
+src/database/generated/
+
+# Vitest — reporte de cobertura
+coverage/
 
 # Editor
 .vscode/

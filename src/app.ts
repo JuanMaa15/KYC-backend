@@ -3,8 +3,6 @@ import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
 
 /**
- * Instancia principal de la aplicación Hono.
- * Aquí se registran middlewares globales y se montan los módulos de negocio.
  *
  * Flujo de middlewares (orden importante):
  * 1. secureHeaders — cabeceras de seguridad HTTP
