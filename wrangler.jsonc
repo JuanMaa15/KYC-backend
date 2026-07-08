@@ -1,0 +1,25 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "kyc-backend",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-07-08",
+  "compatibility_flags": ["nodejs_compat"],
+  // D1 Database — completar con IDs reales al momento del deploy
+  // "d1_databases": [
+  //   {
+  //     "binding": "DB",
+  //     "database_name": "kyc-db",
+  //     "database_id": ""
+  //   }
+  // ],
+  // R2 Bucket — para almacenamiento de imágenes de documentos y selfies
+  // "r2_buckets": [
+  //   {
+  //     "binding": "KYC_BUCKET",
+  //     "bucket_name": "kyc-images"
+  //   }
+  // ],
+  "vars": {
+    "ENVIRONMENT": "development"
+  }
+}
