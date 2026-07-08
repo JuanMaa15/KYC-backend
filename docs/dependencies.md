@@ -66,6 +66,21 @@ npm install -D @eslint/js typescript-eslint
 
 ---
 
+Instaladas con:
+
+```bash
+npm install -D husky @vitest/coverage-v8@3.2.7
+```
+
+| Paquete | Versión | Propósito |
+|---|---|---|
+| `husky` | ^9.x | Gestor de hooks de Git para validar commits (formato del mensaje + calidad del código) |
+| `@vitest/coverage-v8` | ^3.2.7 | Proveedor de cobertura para Vitest usando el motor nativo V8 de Node. Genera reportes y verifica thresholds |
+
+> **Nota:** `@vitest/coverage-v8` se fijó en `3.2.7` porque versiones 4.x requieren `vitest` 4.x y el proyecto usa vitest 3.x.
+
+---
+
 ## Notas
 
 - **`@prisma/adapter-d1`**: Es necesario porque Cloudflare Workers no tiene acceso a Node.js nativo. Este adapter conecta Prisma directamente con el binding `D1Database` del contexto del Worker.
