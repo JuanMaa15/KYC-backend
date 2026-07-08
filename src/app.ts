@@ -1,6 +1,11 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
+import { API_PREFIX } from '@/config/env'
+import { AppError } from '@/share/errors'
+import type { ContentfulStatusCode } from 'hono/utils/http-status'
+import verificationRouter from '@/modules/verifications/verification.router'
+
 
 /**
  *
@@ -34,6 +39,10 @@ app.get('/health', (c) => {
   })
 })
 
+// ── Módulos de negocio ────────────────────────────────────────────────────────
+
+app.route(`${API_PREFIX}/verifications`, verificationRouter)
+
 // ── 404 handler ───────────────────────────────────────────────────────────────
 
 app.notFound((c) => {
@@ -50,13 +59,18 @@ app.notFound((c) => {
 // ── Error handler global ──────────────────────────────────────────────────────
 
 app.onError((err, c) => {
+  // Errores de dominio conocidos → responden con su código y mensaje
+  if (err instanceof AppError) {
+    return c.json(
+      { status: 'error', message: err.message, code: err.statusCode },
+      err.statusCode as ContentfulStatusCode
+    )
+  }
+
+  // Errores inesperados → se loguean completos, pero al cliente solo un genérico
   console.error('[GlobalError]', err)
   return c.json(
-    {
-      status: 'error',
-      message: err.message ?? 'Internal server error',
-      code: 500,
-    },
+    { status: 'error', message: 'Internal server error', code: 500 },
     500
   )
 })
