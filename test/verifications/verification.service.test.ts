@@ -4,6 +4,8 @@ import { NotFoundError, BadRequestError } from '@/share/errors'
 
 const mockUUID = '550e8400-e29b-41d4-a716-446655440000'
 
+const recentDate = new Date()
+
 const mockVerification = {
   id: mockUUID,
   name: 'Juan',
@@ -11,9 +13,17 @@ const mockVerification = {
   documentNumber: '12345678',
   urlDocumentImage: `verifications/${mockUUID}/document.jpg`,
   urlSelfieImage: `verifications/${mockUUID}/selfie.jpg`,
-  status: 'pending',
-  createdAt: new Date('2026-01-01'),
-  updatedAt: new Date('2026-01-01'),
+  status: 'pending' as const,
+  createdAt: recentDate,
+  updatedAt: recentDate,
+}
+
+const oldDate = new Date('2026-01-01')
+
+const oldMockVerification = {
+  ...mockVerification,
+  createdAt: oldDate,
+  updatedAt: oldDate,
 }
 
 const mockPrisma = {
@@ -98,22 +108,66 @@ describe('VerificationService', () => {
   })
 
   describe('findById', () => {
-    it('should return verification when found', async () => {
+    it('debería devolver la verificación sin cambios cuando está en pending y no pasaron 10s', async () => {
       mockPrisma.verification.findUnique.mockResolvedValue(mockVerification)
 
-      const result = await service.findById('550e8400-e29b-41d4-a716-446655440000')
+      const result = await service.findById(mockUUID)
 
       expect(mockPrisma.verification.findUnique).toHaveBeenCalledWith({
-        where: { id: '550e8400-e29b-41d4-a716-446655440000' },
+        where: { id: mockUUID },
       })
-      expect(result).toEqual(mockVerification)
+      expect(mockPrisma.verification.update).not.toHaveBeenCalled()
+      expect(result.status).toBe('pending')
+    })
+
+    it('debería resolver la verificación cuando está en pending y pasaron más de 10s', async () => {
+      const firstTwo = parseInt(mockUUID.replace(/-/g, '').substring(0, 2), 16)
+      const expectedVerdict = firstTwo % 5 === 0 ? 'rejected' : 'approved'
+      const resolved = { ...oldMockVerification, status: expectedVerdict }
+
+      mockPrisma.verification.findUnique.mockResolvedValue(oldMockVerification)
+      mockPrisma.verification.update.mockResolvedValue(resolved)
+
+      const result = await service.findById(mockUUID)
+
+      expect(mockPrisma.verification.update).toHaveBeenCalledWith({
+        where: { id: mockUUID },
+        data: { status: expectedVerdict },
+      })
+      expect(result.status).toBe(expectedVerdict)
+    })
+
+    it('debería determinar el veredicto de forma determinística por ID', async () => {
+      const idA = 'aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa'
+      const idB = 'bbbbbbbb-bbbb-bbbb-bbbb-bbbbbbbbbbbb'
+      const verdictA = parseInt(idA.replace(/-/g, '').substring(0, 2), 16) % 5 === 0 ? 'rejected' : 'approved'
+      const verdictB = parseInt(idB.replace(/-/g, '').substring(0, 2), 16) % 5 === 0 ? 'rejected' : 'approved'
+
+      const oldA = { ...oldMockVerification, id: idA }
+      const oldB = { ...oldMockVerification, id: idB }
+      const resolvedA = { ...oldA, status: verdictA }
+      const resolvedB = { ...oldB, status: verdictB }
+
+      mockPrisma.verification.findUnique.mockResolvedValueOnce(oldA)
+      mockPrisma.verification.update.mockResolvedValueOnce(resolvedA)
+      mockPrisma.verification.findUnique.mockResolvedValueOnce(oldB)
+      mockPrisma.verification.update.mockResolvedValueOnce(resolvedB)
+
+      const [resultA, resultB] = await Promise.all([
+        service.findById(idA),
+        service.findById(idB),
+      ])
+
+      expect(resultA.status).toBe(verdictA)
+      expect(resultB.status).toBe(verdictB)
+      expect(resultA.status).not.toBe(resultB.status)
     })
 
     it('should throw NotFoundError when not found', async () => {
       mockPrisma.verification.findUnique.mockResolvedValue(null)
 
       await expect(
-        service.findById('550e8400-e29b-41d4-a716-446655440000')
+        service.findById(mockUUID)
       ).rejects.toThrow(NotFoundError)
     })
   })
