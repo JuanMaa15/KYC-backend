@@ -23,6 +23,7 @@ const mockPrisma = vi.hoisted(() => ({
   verification: {
     create: vi.fn(),
     findUnique: vi.fn(),
+    update: vi.fn(),
   },
 }))
 
@@ -175,6 +176,82 @@ describe('Verification Router', () => {
       const res = await app.request('/api/v1/verifications/id-invalido', {
         method: 'GET',
       })
+
+      expect(res.status).toBe(400)
+    })
+  })
+
+  describe('PATCH /api/v1/verifications/:id/status', () => {
+    it('debería cambiar el estado y devolver 200', async () => {
+      mockPrisma.verification.findUnique.mockResolvedValue(mockVerification)
+      const updated = { ...mockVerification, status: 'approved' }
+      mockPrisma.verification.update.mockResolvedValue(updated)
+
+      const res = await app.request(
+        `/api/v1/verifications/${mockVerification.id}/status`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ status: 'approved' }),
+          headers: { 'Content-Type': 'application/json' },
+        },
+        mockEnv
+      )
+
+      expect(res.status).toBe(200)
+      const body = await res.json()
+      expect(body).toEqual({
+        status: 'success',
+        message: 'Estado actualizado',
+        data: {
+          ...updated,
+          createdAt: mockVerification.createdAt.toISOString(),
+          updatedAt: mockVerification.updatedAt.toISOString(),
+        },
+        code: 200,
+      })
+    })
+
+    it('debería devolver 404 cuando la verificación no existe', async () => {
+      mockPrisma.verification.findUnique.mockResolvedValue(null)
+
+      const res = await app.request(
+        `/api/v1/verifications/${mockVerification.id}/status`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ status: 'approved' }),
+          headers: { 'Content-Type': 'application/json' },
+        },
+        mockEnv
+      )
+
+      expect(res.status).toBe(404)
+      const body = await res.json()
+      expect(body).toEqual({
+        status: 'error',
+        message: 'Verificación no encontrada',
+        code: 404,
+      })
+    })
+
+    it('debería devolver 400 cuando el ID no es un UUID válido', async () => {
+      const res = await app.request('/api/v1/verifications/id-invalido/status', {
+        method: 'PATCH',
+        body: JSON.stringify({ status: 'approved' }),
+        headers: { 'Content-Type': 'application/json' },
+      })
+
+      expect(res.status).toBe(400)
+    })
+
+    it('debería devolver 400 cuando el status no es válido', async () => {
+      const res = await app.request(
+        `/api/v1/verifications/${mockVerification.id}/status`,
+        {
+          method: 'PATCH',
+          body: JSON.stringify({ status: 'invalid-status' }),
+          headers: { 'Content-Type': 'application/json' },
+        }
+      )
 
       expect(res.status).toBe(400)
     })

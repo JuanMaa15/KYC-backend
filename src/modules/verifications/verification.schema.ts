@@ -23,7 +23,15 @@ export const verificationParamsSchema = z.object({
   id: z.string().uuid('El ID debe ser un UUID válido'),
 })
 
+export const updateStatusSchema = z.object({
+  status: z.enum(['approved', 'rejected'], {
+    required_error: 'El estado es requerido',
+    invalid_type_error: 'El estado debe ser approved o rejected',
+  }),
+})
+
 export type CreateVerificationDto = z.infer<typeof createVerificationSchema>
+export type UpdateStatusDto = z.infer<typeof updateStatusSchema>
 
 export type FileField = 'documentImage' | 'selfieImage'
 

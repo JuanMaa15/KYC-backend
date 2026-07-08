@@ -20,8 +20,11 @@ const mockPrisma = {
   verification: {
     create: vi.fn(),
     findUnique: vi.fn(),
+    update: vi.fn(),
   },
 }
+
+const approvedVerification = { ...mockVerification, status: 'approved' }
 
 const mockStorage = {
   upload: vi.fn(),
@@ -112,6 +115,57 @@ describe('VerificationService', () => {
       await expect(
         service.findById('550e8400-e29b-41d4-a716-446655440000')
       ).rejects.toThrow(NotFoundError)
+    })
+  })
+
+  describe('updateStatus', () => {
+    it('debería cambiar el estado a approved cuando la verificación está en pending', async () => {
+      mockPrisma.verification.findUnique.mockResolvedValue(mockVerification)
+      const updated = { ...mockVerification, status: 'approved' }
+      mockPrisma.verification.update.mockResolvedValue(updated)
+
+      const result = await service.updateStatus(mockUUID, 'approved')
+
+      expect(mockPrisma.verification.findUnique).toHaveBeenCalledWith({
+        where: { id: mockUUID },
+      })
+      expect(mockPrisma.verification.update).toHaveBeenCalledWith({
+        where: { id: mockUUID },
+        data: { status: 'approved' },
+      })
+      expect(result).toEqual(updated)
+    })
+
+    it('debería cambiar el estado a rejected cuando la verificación está en pending', async () => {
+      mockPrisma.verification.findUnique.mockResolvedValue(mockVerification)
+      const updated = { ...mockVerification, status: 'rejected' }
+      mockPrisma.verification.update.mockResolvedValue(updated)
+
+      const result = await service.updateStatus(mockUUID, 'rejected')
+
+      expect(mockPrisma.verification.update).toHaveBeenCalledWith({
+        where: { id: mockUUID },
+        data: { status: 'rejected' },
+      })
+      expect(result).toEqual(updated)
+    })
+
+    it('debería lanzar NotFoundError cuando la verificación no existe', async () => {
+      mockPrisma.verification.findUnique.mockResolvedValue(null)
+
+      await expect(service.updateStatus(mockUUID, 'approved')).rejects.toThrow(NotFoundError)
+    })
+
+    it('debería lanzar BadRequestError cuando la verificación no está en pending', async () => {
+      mockPrisma.verification.findUnique.mockResolvedValue(approvedVerification)
+
+      await expect(service.updateStatus(mockUUID, 'approved')).rejects.toThrow(BadRequestError)
+    })
+
+    it('debería lanzar BadRequestError cuando el estado no coincide con el enum', async () => {
+      await expect(
+        service.updateStatus(mockUUID, 'invalid-status' as 'approved' | 'rejected')
+      ).rejects.toThrow(BadRequestError)
     })
   })
 })
