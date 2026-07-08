@@ -1,4 +1,9 @@
 import { z } from 'zod'
+import { BadRequestError } from '@/share/errors'
+
+export const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png'] as const
+export const ALLOWED_EXTENSIONS = ['.jpeg', '.jpg', '.png'] as const
+export const MAX_FILE_SIZE = 10 * 1024 * 1024
 
 export const createVerificationSchema = z.object({
   name: z
@@ -19,3 +24,18 @@ export const verificationParamsSchema = z.object({
 })
 
 export type CreateVerificationDto = z.infer<typeof createVerificationSchema>
+
+export type FileField = 'documentImage' | 'selfieImage'
+
+export function validateFile(file: File, field: FileField): BadRequestError | null {
+  if (!(file instanceof File) || file.size === 0) {
+    return new BadRequestError(`El archivo ${field} es requerido`)
+  }
+  if (!ALLOWED_MIME_TYPES.includes(file.type as typeof ALLOWED_MIME_TYPES[number])) {
+    return new BadRequestError(`El archivo ${field} debe ser JPEG o PNG`)
+  }
+  if (file.size > MAX_FILE_SIZE) {
+    return new BadRequestError(`El archivo ${field} no puede superar los 10 MB`)
+  }
+  return null
+}

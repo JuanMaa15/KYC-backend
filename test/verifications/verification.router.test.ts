@@ -4,17 +4,20 @@ import { AppError } from '@/share/errors'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import verificationRouter from '@/modules/verifications/verification.router'
 
-const mockVerification = vi.hoisted(() => ({
-  id: '550e8400-e29b-41d4-a716-446655440000',
-  name: 'Juan',
-  email: 'juan@test.com',
-  documentNumber: '12345678',
-  urlDocumentImage: null,
-  urlSelfieImage: null,
-  status: 'pending',
-  createdAt: new Date('2026-01-01'),
-  updatedAt: new Date('2026-01-01'),
-}))
+const mockVerification = vi.hoisted(() => {
+  const id = '550e8400-e29b-41d4-a716-446655440000'
+  return {
+    id,
+    name: 'Juan',
+    email: 'juan@test.com',
+    documentNumber: '12345678',
+    urlDocumentImage: `verifications/${id}/document.jpg`,
+    urlSelfieImage: `verifications/${id}/selfie.jpg`,
+    status: 'pending',
+    createdAt: new Date('2026-01-01'),
+    updatedAt: new Date('2026-01-01'),
+  }
+})
 
 const mockPrisma = vi.hoisted(() => ({
   verification: {
@@ -23,12 +26,21 @@ const mockPrisma = vi.hoisted(() => ({
   },
 }))
 
+const mockStorage = vi.hoisted(() => ({
+  upload: vi.fn(),
+}))
+
 vi.mock('@/database/prismaService', () => ({
   createPrismaClient: vi.fn(() => mockPrisma),
 }))
 
+vi.mock('@/providers/storage.provider', () => ({
+  StorageProvider: vi.fn(() => mockStorage),
+}))
+
 const mockEnv = {
   DB: {} as Record<string, unknown>,
+  KYC_BUCKET: {} as Record<string, unknown>,
   ENVIRONMENT: 'test',
 }
 
@@ -37,6 +49,7 @@ describe('Verification Router', () => {
 
   beforeEach(() => {
     vi.clearAllMocks()
+    vi.spyOn(crypto, 'randomUUID').mockReturnValue('550e8400-e29b-41d4-a716-446655440000')
 
     app = new Hono()
     app.route('/api/v1/verifications', verificationRouter)
@@ -64,17 +77,23 @@ describe('Verification Router', () => {
   })
 
   describe('POST /api/v1/verifications', () => {
+    function buildForm(overrides?: Partial<Record<string, string | File>>) {
+      const form = new FormData()
+      form.append('name', overrides?.name ?? 'Juan')
+      form.append('email', overrides?.email ?? 'juan@test.com')
+      form.append('documentNumber', overrides?.documentNumber ?? '12345678')
+      form.append('documentImage', overrides?.documentImage ?? new File(['fake'], 'doc.jpg', { type: 'image/jpeg' }))
+      form.append('selfieImage', overrides?.selfieImage ?? new File(['fake'], 'selfie.jpg', { type: 'image/jpeg' }))
+      return form
+    }
+
     it('debería crear una verificación y devolver 201', async () => {
       mockPrisma.verification.create.mockResolvedValue(mockVerification)
+      mockStorage.upload.mockResolvedValue('key')
 
       const res = await app.request('/api/v1/verifications', {
         method: 'POST',
-        body: JSON.stringify({
-          name: 'Juan',
-          email: 'juan@test.com',
-          documentNumber: '12345678',
-        }),
-        headers: { 'Content-Type': 'application/json' },
+        body: buildForm(),
       }, mockEnv)
 
       expect(res.status).toBe(201)
@@ -94,13 +113,8 @@ describe('Verification Router', () => {
     it('debería devolver 400 cuando el email es inválido', async () => {
       const res = await app.request('/api/v1/verifications', {
         method: 'POST',
-        body: JSON.stringify({
-          name: 'Juan',
-          email: 'email-invalido',
-          documentNumber: '12345678',
-        }),
-        headers: { 'Content-Type': 'application/json' },
-      })
+        body: buildForm({ email: 'email-invalido' }),
+      }, mockEnv)
 
       expect(res.status).toBe(400)
     })
@@ -108,9 +122,8 @@ describe('Verification Router', () => {
     it('debería devolver 400 cuando faltan campos requeridos', async () => {
       const res = await app.request('/api/v1/verifications', {
         method: 'POST',
-        body: JSON.stringify({}),
-        headers: { 'Content-Type': 'application/json' },
-      })
+        body: new FormData(),
+      }, mockEnv)
 
       expect(res.status).toBe(400)
     })
