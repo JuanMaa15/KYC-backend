@@ -20,8 +20,8 @@ model Verification {
   name              String
   email             String
   documentNumber    String
-  urlDocumentImage  String
-  urlSelfieImage    String
+  urlDocumentImage  String?
+  urlSelfieImage    String?
   status            VerificationStatus @default(pending)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt

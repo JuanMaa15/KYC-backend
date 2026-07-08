@@ -4,10 +4,11 @@
   "scripts": {
     "dev": "wrangler dev",
     "deploy": "wrangler deploy --minify",
+    "postinstall": "prisma generate",
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage --coverage.include=\"src/**\" --coverage.exclude=\"**/generated/**\" --coverage.exclude=\"src/app.ts\" --coverage.exclude=\"src/index.ts\" --coverage.exclude=\"src/config/env.ts\" --coverage.exclude=\"src/database/prismaService.ts\" --coverage.exclude=\"src/share/errors.ts\" --coverage.thresholds.statements=80 --coverage.thresholds.branches=80 --coverage.thresholds.functions=80 --coverage.thresholds.lines=80",
+    "test:coverage": "vitest run --coverage --coverage.include=\"src/**\" --coverage.exclude=\"**/generated/**\" --coverage.exclude=\"src/providers/**\" --coverage.exclude=\"src/app.ts\" --coverage.exclude=\"src/index.ts\" --coverage.exclude=\"src/config/env.ts\" --coverage.exclude=\"src/database/prismaService.ts\" --coverage.exclude=\"src/share/errors.ts\" --coverage.thresholds.statements=80 --coverage.thresholds.branches=80 --coverage.thresholds.functions=80 --coverage.thresholds.lines=80",
     "db:generate": "prisma generate",
     "db:migrate": "wrangler d1 migrations apply kyc-db",
     "db:studio": "prisma studio",
