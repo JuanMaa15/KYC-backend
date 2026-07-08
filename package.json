@@ -7,13 +7,14 @@
     "cf-typegen": "wrangler types --env-interface CloudflareBindings",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage",
+    "test:coverage": "vitest run --coverage --coverage.include=\"src/**\" --coverage.exclude=\"**/generated/**\" --coverage.exclude=\"src/app.ts\" --coverage.exclude=\"src/index.ts\" --coverage.exclude=\"src/config/env.ts\" --coverage.exclude=\"src/database/prismaService.ts\" --coverage.exclude=\"src/share/errors.ts\" --coverage.thresholds.statements=80 --coverage.thresholds.branches=80 --coverage.thresholds.functions=80 --coverage.thresholds.lines=80",
     "db:generate": "prisma generate",
     "db:migrate": "wrangler d1 migrations apply kyc-db",
     "db:studio": "prisma studio",
     "lint": "eslint src --ext .ts",
     "lint:fix": "eslint src --ext .ts --fix",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare": "husky"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.4.3",
@@ -27,7 +28,9 @@
     "@types/node": "^26.1.0",
     "@typescript-eslint/eslint-plugin": "^8.35.1",
     "@typescript-eslint/parser": "^8.35.1",
+    "@vitest/coverage-v8": "^3.2.7",
     "eslint": "^9.0.0",
+    "husky": "^9.1.7",
     "prisma": "^7.6.0",
     "typescript-eslint": "^8.35.1",
     "vitest": "^3.2.4",
