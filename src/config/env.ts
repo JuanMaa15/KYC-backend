@@ -7,6 +7,8 @@ export interface Env {
   ENVIRONMENT: string
   /** Binding de la base de datos D1 — se configurará en wrangler.jsonc */
   DB: D1Database
+  /** Binding del bucket R2 para almacenamiento de imágenes */
+  KYC_BUCKET: R2Bucket
 }
 
 /**
