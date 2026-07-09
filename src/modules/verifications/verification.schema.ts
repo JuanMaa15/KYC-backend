@@ -30,6 +30,36 @@ export const updateStatusSchema = z.object({
   }),
 })
 
+// ── Schemas de respuesta para OpenAPI ─────────────────────────────────────────
+
+export const verificationResponseSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string(),
+  email: z.string().email(),
+  documentNumber: z.string(),
+  urlDocumentImage: z.string().nullable(),
+  urlSelfieImage: z.string().nullable(),
+  status: z.enum(['pending', 'approved', 'rejected']),
+  createdAt: z.string().datetime(),
+  updatedAt: z.string().datetime(),
+})
+
+export const successResponseSchema = <T extends z.ZodTypeAny>(dataSchema: T) =>
+  z.object({
+    status: z.literal('success'),
+    message: z.string(),
+    data: dataSchema,
+    code: z.number(),
+  })
+
+export const errorResponseSchema = z.object({
+  status: z.literal('error'),
+  message: z.string(),
+  code: z.number(),
+})
+
+// ── Tipos derivados ───────────────────────────────────────────────────────────
+
 export type CreateVerificationDto = z.infer<typeof createVerificationSchema>
 export type UpdateStatusDto = z.infer<typeof updateStatusSchema>
 

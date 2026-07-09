@@ -9,6 +9,8 @@ export interface Env {
   DB: D1Database
   /** Binding del bucket R2 para almacenamiento de imágenes */
   KYC_BUCKET: R2Bucket
+/** URL de la app frontend */
+  FRONTEND_URL: string
 }
 
 /**

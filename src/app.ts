@@ -1,7 +1,11 @@
 import { Hono } from 'hono'
 import { cors } from 'hono/cors'
 import { secureHeaders } from 'hono/secure-headers'
-import { API_PREFIX } from '@/config/env'
+import { swaggerUI } from '@hono/swagger-ui'
+import { openAPIRouteHandler, describeRoute } from 'hono-openapi'
+import { resolver } from 'hono-openapi'
+import { z } from 'zod'
+import { API_PREFIX, API_VERSION } from '@/config/env'
 import { AppError } from '@/share/errors'
 import type { ContentfulStatusCode } from 'hono/utils/http-status'
 import verificationRouter from '@/modules/verifications/verification.router'
@@ -20,28 +24,80 @@ const app = new Hono<{ Bindings: CloudflareBindings }>()
 
 app.use('*', secureHeaders())
 
+
 app.use(
-  '*',
+  '*', (c, next) =>
   cors({
-    origin: '*', // TODO: restringir al dominio del frontend en producción
+    origin:  c.env.FRONTEND_URL, // TODO: restringir al dominio del frontend en producción
     allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
     allowHeaders: ['Content-Type', 'Authorization'],
-  })
+  })(c, next)
 )
 
 // ── Health check ──────────────────────────────────────────────────────────────
 
-app.get('/health', (c) => {
-  return c.json({
-    status: 'success',
-    message: 'KYC API is running',
-    code: 200,
-  })
+const healthResponseSchema = z.object({
+  status: z.literal('success'),
+  message: z.string(),
+  code: z.literal(200),
 })
+
+app.get(
+  '/health',
+  describeRoute({
+    tags: ['Health'],
+    summary: 'Health check',
+    description: 'Verifica que la API esta funcionando correctamente.',
+    responses: {
+      200: {
+        description: 'API operativa',
+        content: {
+          'application/json': {
+            schema: resolver(healthResponseSchema),
+          },
+        },
+      },
+    },
+  }),
+  (c) => {
+    return c.json({
+      status: 'success',
+      message: 'KYC API is running',
+      code: 200,
+    })
+  }
+)
 
 // ── Módulos de negocio ────────────────────────────────────────────────────────
 
 app.route(`${API_PREFIX}/verifications`, verificationRouter)
+
+// ── Documentación OpenAPI ─────────────────────────────────────────────────────
+
+app.get(
+  '/api/specs',
+  openAPIRouteHandler(app, {
+    documentation: {
+      info: {
+        title: 'KYC API',
+        version: API_VERSION,
+        description: 'API de validacion de identidad (KYC). Permite crear verificaciones con subida de documentos y selfies, consultar su estado y resolverlas automatica o manualmente.',
+      },
+      servers: [
+        {
+          url: 'http://localhost:8787',
+          description: 'Desarrollo local',
+        },
+      ],
+      tags: [
+        { name: 'Verifications', description: 'Operaciones de verificacion de identidad' },
+        { name: 'Health', description: 'Health check de la API' },
+      ],
+    },
+  })
+)
+
+app.get('/docs', swaggerUI({ url: '/api/specs' }))
 
 // ── 404 handler ───────────────────────────────────────────────────────────────
 
