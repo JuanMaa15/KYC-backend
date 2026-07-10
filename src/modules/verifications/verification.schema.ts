@@ -8,15 +8,20 @@ export const MAX_FILE_SIZE = 10 * 1024 * 1024
 export const createVerificationSchema = z.object({
   name: z
     .string({ required_error: 'El nombre es requerido' })
+    .trim()
     .min(1, 'El nombre no puede estar vacío')
     .max(100, 'El nombre no puede exceder 100 caracteres'),
   email: z
     .string({ required_error: 'El email es requerido' })
-    .email('El email no es válido'),
+    .trim()
+    .email('El email no es válido')
+    .max(100, 'El email no puede exceder 100 caracteres')
+    .transform((v) => v.toLowerCase()),
   documentNumber: z
     .string({ required_error: 'El número de documento es requerido' })
+    .trim()
     .min(1, 'El número de documento no puede estar vacío')
-    .max(50, 'El número de documento no puede exceder 50 caracteres'),
+    .max(20, 'El número de documento no puede exceder 20 dígitos'),
 })
 
 export const verificationParamsSchema = z.object({
