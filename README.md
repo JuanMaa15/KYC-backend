@@ -2,6 +2,8 @@
 
 API de validación de identidad (Know Your Customer) construida con Hono.js y Cloudflare Workers.
 
+- API en producción: https://kycbackend.juanmadev154.workers.dev
+
 ## Stack
 
 | Tecnología | Versión |
@@ -92,6 +94,32 @@ test/
     └── verification.router.test.ts
 
 docs/                             # Documentación del proyecto
+```
+
+## Ejecución con Docker (opcional)
+
+Alternativa a la instalación manual — no requiere Node.js en la máquina,
+solo [Docker Desktop](https://www.docker.com/products/docker-desktop/):
+
+```bash
+# Construir la imagen
+docker build -t kyc-backend .
+
+# Iniciar el contenedor
+docker run --name kyc-api -p 8787:8787 kyc-backend
+```
+
+Al iniciar, el contenedor **aplica las migraciones automáticamente** sobre su
+D1 local y levanta la API en `http://localhost:8787` — veri
+
+```bash
+curl http://localhost:8787/health
+```
+
+Detener y limpiar:
+
+```bash
+docker stop kyc-api && docker rm kyc-api
 ```
 
 ## Endpoints
