@@ -54,7 +54,29 @@ export class VerificationService {
       throw new NotFoundError('Verificación no encontrada')
     }
 
+    // Si sigue pending y pasaron más de 10s desde su creación, se resuelve automáticamente
+    if (verification.status === $Enums.VerificationStatus.pending) {
+      const elapsed = Date.now() - verification.createdAt.getTime()
+      if (elapsed > 10_000) {
+        const verdict = this.determineVerdict(id)
+        return this.prisma.verification.update({
+          where: { id },
+          data: { status: verdict },
+        })
+      }
+    }
+
     return verification
+  }
+
+  // Veredicto determinístico basado en los primeros 2 caracteres hex del UUID:
+  // si % 5 === 0 → rejected, sino → approved
+  private determineVerdict(id: string) {
+    const hex = id.replace(/-/g, '')
+    const firstTwo = parseInt(hex.substring(0, 2), 16)
+    return firstTwo % 5 === 0
+      ? $Enums.VerificationStatus.rejected
+      : $Enums.VerificationStatus.approved
   }
 
   async updateStatus(id: string, newStatus: 'approved' | 'rejected') {
