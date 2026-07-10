@@ -1,0 +1,8 @@
+node_modules
+.wrangler
+coverage
+.env
+.dev.vars
+.git
+dist
+docs
